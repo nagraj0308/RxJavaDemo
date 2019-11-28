@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.example.rxjavademo.complementeryclasses.DisposableClass;
+
 import org.reactivestreams.Subscription;
 
 import io.reactivex.Observable;
@@ -40,7 +42,9 @@ public class MainActivity extends AppCompatActivity {
         return new Observer<String>() {
             @Override
             public void onSubscribe(Disposable d) {
-                tv.setText(tv.getText()+"\nonSubscribe");
+                d=new DisposableClass();
+                d.dispose();
+                tv.setText(tv.getText()+"\nonSubscribe "+d.isDisposed());
                 Log.d("TAG", "onSubscribe");
             }
 
