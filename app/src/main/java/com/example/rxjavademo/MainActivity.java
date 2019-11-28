@@ -10,6 +10,7 @@ import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -27,9 +28,17 @@ public class MainActivity extends AppCompatActivity {
 
         Observer<String> animalsObserver = getAnimalsObserver();
 
+
+
         animalsObservable
-                .observeOn(Schedulers.io())
-                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .filter(new Predicate<String>() {
+                    @Override
+                    public boolean test(String s) throws Exception {
+                        return s.toLowerCase().startsWith("b");
+                    }
+                })
                 .subscribe(animalsObserver);
 
     }
@@ -65,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Observable<String> getAnimalsObservable() {
-        return Observable.just("Ant", "Bee", "Cat", "Dog", "Fox");
+        return Observable.fromArray("Ant","Ape","Bat" ,"Bee", "Cat", "Dog", "Fox");
     }
 
     @Override
