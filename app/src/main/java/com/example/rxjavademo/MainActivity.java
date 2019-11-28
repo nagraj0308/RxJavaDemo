@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         // don't send events once the activity is destroyed
         disposable.dispose();
 
-
+       
     }
 
 }
