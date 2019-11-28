@@ -6,10 +6,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
-import com.example.rxjavademo.complementeryclasses.DisposableClass;
-
-import org.reactivestreams.Subscription;
-
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -18,6 +14,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     TextView tv;
+    Disposable disposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +39,7 @@ public class MainActivity extends AppCompatActivity {
         return new Observer<String>() {
             @Override
             public void onSubscribe(Disposable d) {
-                d=new DisposableClass();
-                d.dispose();
+                disposable=d;
                 tv.setText(tv.getText()+"\nonSubscribe "+d.isDisposed());
                 Log.d("TAG", "onSubscribe");
             }
@@ -70,6 +66,16 @@ public class MainActivity extends AppCompatActivity {
 
     private Observable<String> getAnimalsObservable() {
         return Observable.just("Ant", "Bee", "Cat", "Dog", "Fox");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // don't send events once the activity is destroyed
+        disposable.dispose();
+
+       
     }
 
 }
