@@ -6,7 +6,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -18,110 +23,80 @@ import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     TextView tv;
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private CompositeDisposable disposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         tv=findViewById(R.id.tv);
 
-        Observable<String> animalsObservable = getAnimalsObservable();
-
-        DisposableObserver<String> animalsObserver = getAnimalsObserver();
-
-        DisposableObserver<String> animalsObserverAllCaps = getAnimalsAllCapsObserver();
 
 
-
-
-        compositeDisposable.add(
-                animalsObservable
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .filter(new Predicate<String>() {
-                            @Override
-                            public boolean test(String s) throws Exception {
-                                return s.toLowerCase().startsWith("b");
-                            }
-                        })
-                        .subscribeWith(animalsObserver));
-        compositeDisposable.add(
-                animalsObservable
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .filter(new Predicate<String>() {
-                            @Override
-                            public boolean test(String s) throws Exception {
-                                return s.toLowerCase().startsWith("c");
-                            }
-                        })
-                        .map(new Function<String, String>() {
-                            @Override
-                            public String apply(String s) throws Exception {
-                                return s.toUpperCase();
-                            }
-                        })
-                        .subscribeWith(animalsObserverAllCaps));
-
+        disposable.add(getNotesObservable()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(note -> {
+                    // Making the note to all uppercase
+                    note.setText(note.getText().toUpperCase());
+                    return note;
+                })
+                .subscribeWith(getNotesObserver()));
     }
 
 
-    private DisposableObserver<String> getAnimalsObserver() {
-        return new DisposableObserver<String>() {
 
-           @Override
-            public void onNext(String s) {
-                tv.setText(tv.getText()+"\nonNext"+" "+s);
-                Log.d("TAG", "Name: " + s);
+
+
+    private DisposableObserver<Note> getNotesObserver() {
+        return new DisposableObserver<Note>() {
+
+            @Override
+            public void onNext(Note note) {
+                tv.setText(tv.getText()+"\n"+note.getText());
+                Log.d("TAG", "Note: " + note.getText());
             }
 
             @Override
             public void onError(Throwable e) {
-                tv.setText(tv.getText()+"\nonError");
                 Log.e("TAG", "onError: " + e.getMessage());
             }
 
             @Override
             public void onComplete() {
-                tv.setText(tv.getText()+"\nonComplete");
-                Log.d("TAG", "All items are emitted!");
+                Log.d("TAG", "All notes are emitted!");
             }
         };
     }
 
-    private DisposableObserver<String> getAnimalsAllCapsObserver() {
-        return new DisposableObserver<String>() {
+    private Observable<Note> getNotesObservable() {
+        final List<Note> notes = prepareNotes();
 
-
+        return Observable.create(new ObservableOnSubscribe<Note>() {
             @Override
-            public void onNext(String s) {
-                tv.setText(tv.getText()+"\nonNext"+" "+s);
-                Log.d("TAG", "Name: " + s);
-            }
+            public void subscribe(ObservableEmitter<Note> emitter) throws Exception {
+                for (Note note : notes) {
+                    if (!emitter.isDisposed()) {
+                        emitter.onNext(note);
+                    }
+                }
 
-            @Override
-            public void onError(Throwable e) {
-                tv.setText(tv.getText()+"\nonError");
-                Log.e("TAG", "onError: " + e.getMessage());
+                if (!emitter.isDisposed()) {
+                    emitter.onComplete();
+                }
             }
-
-            @Override
-            public void onComplete() {
-                tv.setText(tv.getText()+"\nonComplete");
-                Log.d("TAG", "All items are emitted!");
-            }
-        };
+        });
     }
 
-    private Observable<String> getAnimalsObservable() {
-        return Observable.fromArray(
-                "Ant", "Ape",
-                "Bat", "Bee", "Bear", "Butterfly",
-                "Cat", "Crab", "Cod",
-                "Dog", "Dove",
-                "Fox", "Frog");
+
+    private List<Note> prepareNotes() {
+        List<Note> notes = new ArrayList<>();
+        notes.add(new Note(1, "buy tooth paste!"));
+        notes.add(new Note(2, "call brother!"));
+        notes.add(new Note(3, "watch narcos tonight!"));
+        notes.add(new Note(4, "pay power bill!"));
+
+        return notes;
     }
 
     @Override
@@ -129,6 +104,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         // don't send events once the activity is destroyed
-        compositeDisposable.clear();
+        disposable.clear();
     }
 }
