@@ -36,10 +36,13 @@ public class MainActivity extends AppCompatActivity {
         disposable.add(getNotesObservable()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .map(note -> {
-                    // Making the note to all uppercase
-                    note.setText(note.getText().toUpperCase());
-                    return note;
+                .map(new Function<Note, Note>() {
+                    @Override
+                    public Note apply(Note note) throws Exception {
+                        // Making the note to all uppercase
+                        note.setText(note.getText().toUpperCase());
+                        return note;
+                    }
                 })
                 .subscribeWith(getNotesObserver()));
     }

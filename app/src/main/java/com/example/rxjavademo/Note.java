@@ -1,8 +1,8 @@
 package com.example.rxjavademo;
 
 public class Note {
-    int id;
-    String text;
+   public int id;
+   public String text;
 
     public Note(int id, String text) {
         this.id = id;
